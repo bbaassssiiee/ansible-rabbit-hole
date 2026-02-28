@@ -19,10 +19,8 @@ Ansible codebases that your future self will thank you for.
 ## Quick start
 
 ```bash
-# Clone as your new project scaffold
-git clone https://github.com/yourname/ansible-rabbit-hole myproject
-cd myproject
-
+# Click the green button [Use this Template]
+# Clone your own repository
 # Open in Claude Code
 claude .
 
