@@ -1,0 +1,29 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-http-cert
+  namespace: "{{ opensearch_namespace }}"
+spec:
+  commonName: opensearch.{{ domain_name }}
+  issuerRef:
+    name: "{{ cluster_issuer }}"
+    kind: ClusterIssuer
+  dnsNames:
+    - localhost
+    - opensearch-cluster.{{ opensearch_namespace }}.svc.cluster.local
+    - opensearch-cluster.{{ opensearch_namespace }}.svc
+    - opensearch-cluster.{{ opensearch_namespace }}
+    - opensearch-cluster
+    - opensearch.{{ opensearch_namespace }}
+    - opensearch.{{ domain_name }}
+    - opensearch-api.{{ domain_name }}
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 4096
+  secretName: opensearch-http-cert
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth

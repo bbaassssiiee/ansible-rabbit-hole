@@ -1,0 +1,22 @@
+---
+# molecule/default/converge.yml
+#
+# Apply the role under test. Keep this minimal — no helper setup here.
+# If you need pre-conditions (create users, set up files), use prepare.yml.
+#
+# 🐇 /explore molecule-prepare — when converge.yml isn't enough
+
+- name: Converge
+  hosts: all
+  gather_facts: true
+
+  # Set all required variables explicitly.
+  # Do NOT rely on defaults alone — be explicit in tests.
+  # This documents what the role actually needs to run.
+  vars:
+    # role_name_required_var: "test_value"
+    # role_name_secret: "test_secret_not_for_production"
+
+  roles:
+    - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      # ↑ Uses the role directory name dynamically — works for any role name

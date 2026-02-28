@@ -1,0 +1,120 @@
+---
+# when: desired_state == 'present'
+- name: Log input parameters
+  ansible.builtin.debug:
+    msg: |
+      use_kubeblocks: {{ use_kubeblocks }}
+      registry_user: {{ registry_user | d('') }}
+
+# The logins can be read-only or read-write
+- name: Registry login for helm
+  when: registry_user is defined
+  environment:
+    REGISTRY_PASS: "{{ registry_pass }}"
+  ansible.builtin.command:
+    cmd: 'helm registry login "{{ registry_host }}" --username "{{ registry_user }}" --password $REGISTRY_PASS'
+  changed_when: false
+
+- name: Registry login for docker
+  when: registry_user is defined
+  environment:
+    REGISTRY_PASS: "{{ registry_pass }}"
+  ansible.builtin.command:
+    cmd: 'docker login -u "{{ registry_user }}" -p$REGISTRY_PASS "{{ registry_host }}"'
+  changed_when: false
+
+- name: Copy the kubeblocks CRDs
+  ansible.builtin.copy:
+    src: "{{ crd_manifest }}"
+    dest: "{{ kubeblocks_cache }}/"
+    mode: '0664'
+
+- name: Create the kubeblocks CRDs
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ kubeblocks_cache }}/{{ crd_manifest }}"
+    namespace: kube-system
+    validate:
+      fail_on_error: true
+    wait: true
+  no_log: "{{ not debug }}"
+
+- name: Waiting 2 minutes for reconciliation
+  ansible.builtin.debug:
+    msg: ...
+
+- name: Waited 2 minutes for reconciliation
+  ansible.builtin.wait_for:
+    timeout: 120
+
+- name: Add KubeBlocks Helm repository
+  kubernetes.core.helm_repository:
+    name: kubeblocks
+    repo_url: "{{ helm_repo_url }}"
+
+- name: Install KubeBlocks on-prem
+  when:
+    - registry_host is defined
+    - registry_host != ''
+  block:
+    - name: Install KubeBlocks crds
+      kubernetes.core.helm:
+        name: kubeblocks
+        binary_path: "{{ helm_binary }}"
+        chart_ref: kubeblocks/kubeblocks
+        chart_version: "{{ kubeblocks_version }}"
+        release_namespace: kb-system
+        create_namespace: true
+        set_values:
+          - value: image.registry={{ registry_host }}
+          - value: dataProtection.image.registry={{ registry_host }}
+          - value: addonChartsImage.registry={{ registry_host }}
+          - value: autoInstalledAddons="{}"
+        wait: true
+
+    - name: Install KubeBlocks addons
+      kubernetes.core.helm:
+        name: "kb-addon-{{ item.name }}"
+        binary_path: "{{ helm_binary }}"
+        chart_ref: "kubeblocks/{{ item.name }}"
+        chart_version: "{{ item.version | default(kubeblocks_version) }}"
+        release_namespace: kb-system
+        set_values:
+          - value: image.registry={{ registry_host }}
+          - value: images.registry={{ registry_host }}
+        wait: true
+      loop: "{{ kubeblocks_addons }}"
+      when: item.enabled | bool
+
+- name: Install KubeBlocks online
+  when:
+    - registry_host is not defined or registry_host == ''
+  block:
+    - name: Install KubeBlocks crds
+      kubernetes.core.helm:
+        name: kubeblocks
+        binary_path: "{{ helm_binary }}"
+        chart_ref: kubeblocks/kubeblocks
+        chart_version: "{{ kubeblocks_version }}"
+        release_namespace: kb-system
+        create_namespace: true
+        set_values:
+          - value: image.registry=docker.io
+          - value: dataProtection.image.registry=docker.io
+          - value: addonChartsImage.registry=docker.io
+          - value: autoInstalledAddons="{}"
+        wait: true
+
+    - name: Install KubeBlocks addons
+      kubernetes.core.helm:
+        name: "kb-addon-{{ item.name }}"
+        binary_path: "{{ helm_binary }}"
+        chart_ref: "kubeblocks/{{ item.name }}"
+        chart_version: "{{ item.version | default(kubeblocks_version) }}"
+        release_namespace: kb-system
+        set_values:
+          - value: image.registry=docker.io
+          - value: images.registry=docker.io
+        wait: true
+      loop: "{{ kubeblocks_addons }}"
+      when: item.enabled | bool

@@ -1,0 +1,34 @@
+# .ansible-lint
+#
+# Project-scoped ansible-lint configuration.
+# Run: ansible-lint
+# In Molecule: add `ansible-lint` to the lint: block in molecule.yml
+#
+# 🐇 /explore ansible-lint — rules, profiles, custom rules
+
+profile: production
+# Profiles: min → basic → moderate → safety → shared → production
+# Start with 'basic', graduate to 'production' as the codebase matures.
+
+# Rules to exclude (document WHY for each)
+warn_list:
+  - yaml[line-length]  # Long names are more readable than short cryptic ones
+
+skip_list:
+  # - no-free-form   # Uncomment if migrating a legacy codebase — fix and remove
+
+# Exclude paths from linting
+exclude_paths:
+  - .git/
+  - molecule/
+  - collections/          # Installed collections, not our code
+  - "**/.venv/"
+
+# Use FQCN for all builtin modules
+use_default_rules: true
+
+# Offline mode (useful in air-gapped environments)
+# offline: true
+
+# Maximum number of violations before ansible-lint exits with error
+# max_warnings: 0

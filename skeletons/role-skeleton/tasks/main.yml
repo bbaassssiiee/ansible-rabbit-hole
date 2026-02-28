@@ -1,0 +1,41 @@
+---
+# tasks/main.yml
+#
+# Organized by concern, not by module type.
+# Each include_tasks maps to one file that does one thing.
+# Tags allow selective execution: ansible-playbook site.yml --tags nginx,configure
+#
+# 🐇 /explore tasks — why organization by concern beats organization by type
+
+- name: Gather platform facts
+  ansible.builtin.setup:
+    gather_subset: "platform"
+
+- name: Define OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+
+- name: "{{ role_name }} | Validate required variables"
+  ansible.builtin.include_tasks: assert.yml
+  tags:
+    - always
+    - "{{ role_name }}"
+    - assert
+
+- name: "{{ role_name }} | Install packages"
+  ansible.builtin.include_tasks: install.yml
+  tags:
+    - install
+    - "{{ role_name }}"
+
+- name: "{{ role_name }} | Configure"
+  ansible.builtin.include_tasks: configure.yml
+  tags:
+    - configure
+    - "{{ role_name }}"
+
+- name: "{{ role_name }} | Manage service"
+  ansible.builtin.include_tasks: service.yml
+  when: role_name_manage_service | bool
+  tags:
+    - service
+    - "{{ role_name }}"

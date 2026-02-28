@@ -1,0 +1,72 @@
+---
+# molecule/default/verify.yml
+#
+# Assert actual state — not that tasks ran, but that the system is correct.
+# This is where most roles are undertested. Be specific.
+#
+# The rule: if you deployed it, verify it.
+# Package installed? Verify it.
+# Service running? Verify it.
+# Config file deployed? Verify the file exists AND a key value inside it.
+# Port listening? Verify it.
+#
+# 🐇 /explore verify-patterns — what good verification looks like
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    # ── Package verification ──────────────────────────────────────────────
+    - name: "Verify | Gather package facts"
+      ansible.builtin.package_facts:
+        manager: auto
+
+    # - name: "Verify | Assert package is installed"
+    #   ansible.builtin.assert:
+    #     that: "'<package-name>' in ansible_facts.packages"
+    #     fail_msg: "Package <package-name> is not installed"
+
+    # ── Service verification ──────────────────────────────────────────────
+    - name: "Verify | Gather service facts"
+      ansible.builtin.service_facts:
+
+    # - name: "Verify | Assert service is running and enabled"
+    #   ansible.builtin.assert:
+    #     that:
+    #       - ansible_facts.services['<service-name>.service'] is defined
+    #       - ansible_facts.services['<service-name>.service']['state'] == 'running'
+    #       - ansible_facts.services['<service-name>.service']['status'] == 'enabled'
+    #     fail_msg: "Service <service-name> is not running or not enabled"
+
+    # ── File verification ─────────────────────────────────────────────────
+    # - name: "Verify | Assert config file exists"
+    #   ansible.builtin.stat:
+    #     path: /etc/<role-name>/<role-name>.conf
+    #   register: config_file
+
+    # - name: "Verify | Assert config file is present and readable"
+    #   ansible.builtin.assert:
+    #     that:
+    #       - config_file.stat.exists
+    #       - config_file.stat.mode == '0644'
+    #     fail_msg: "Config file missing or wrong permissions"
+
+    # ── Content verification ──────────────────────────────────────────────
+    # - name: "Verify | Check config file contains expected value"
+    #   ansible.builtin.command: grep -q "expected_value" /etc/<role-name>/<role-name>.conf
+    #   changed_when: false
+    #   failed_when: false
+    #   register: config_check
+
+    # - name: "Verify | Assert expected value is in config"
+    #   ansible.builtin.assert:
+    #     that: config_check.rc == 0
+    #     fail_msg: "Config file does not contain expected_value"
+
+    # ── Network verification ──────────────────────────────────────────────
+    # - name: "Verify | Assert port is listening"
+    #   ansible.builtin.wait_for:
+    #     port: <port>
+    #     timeout: 5
+    #     msg: "Port <port> is not listening"

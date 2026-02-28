@@ -1,0 +1,20 @@
+---
+# playbooks/site.yml
+#
+# Playbooks bundled with the collection.
+# Users invoke these with: ansible-playbook yournamespace.collection_name.site
+# Or reference via FQCN in their own playbooks.
+#
+# Convention: playbooks in a collection are entry points for the collection's purpose.
+# They use the collection's own roles via FQCN.
+#
+# 🐇 /explore collection-playbooks — how they differ from standalone playbooks
+
+- name: "Apply yournamespace.collection_name baseline"
+  hosts: all
+  gather_facts: true
+  roles:
+    - role: yournamespace.collection_name.your_role
+      # ← FQCN: namespace.collection.role_name
+      # This is the key difference from standalone roles.
+      # Users installing this collection get predictable, non-colliding role names.

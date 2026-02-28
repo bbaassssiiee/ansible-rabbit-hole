@@ -1,0 +1,19 @@
+---
+# meta/runtime.yml
+#
+# Collection runtime metadata.
+# Defines minimum Ansible version and any routing overrides.
+# Required for collections published to Galaxy or Automation Hub.
+#
+# 🐇 /explore collection-routing — redirecting removed modules
+
+requires_ansible: ">=2.15.0"
+
+# plugin_routing:
+#   modules:
+#     old_module_name:
+#       redirect: yournamespace.collection_name.new_module_name
+#       # Use redirect when you renamed a module — maintains backward compatibility
+#       deprecation:
+#         removal_version: "2.0.0"
+#         warning_text: "Use new_module_name instead."

@@ -1,0 +1,62 @@
+---
+# defaults file for cluster
+
+containers_to_deploy:
+  opensearch:
+    image: "opensearchproject/opensearch"
+    tag: "3.0.0"
+    digest: "sha256:70e2608c889b2dc8eb3a4cdb4d4983be2eff201131dca78a2d3d65056332a627"
+  opsterio_busybox:
+    image: "opsterio/busybox"
+    tag: "1.27.2-buildx"
+    digest: "sha256:b04e06c3104cc5d35963d5f73d97114b44d19aa815205b6bdcb6d2964eedef33"
+  opensearch_dashboards:
+    image: "opensearchproject/opensearch-dashboards"
+    tag: "3.0.0"
+    digest: "sha256:664eb1a60492dd69e9c50ce5bc2e5783b192c6c3c99d7bf6166631c977ad1480"
+
+# defaults file for opensearch
+debug: false
+cert_manager_cluster_issuer: "ca-issuer"
+opensearch_admin_user: admin
+opensearch_index_user: indexer
+opensearch_dashboard_user: kibanaserver
+# override these passwords in your inventory
+opensearch_admin_pass: admin123
+opensearch_index_pass: indexer123
+opensearch_dashboard_pass: kibana
+
+opensearch_hostname: "opensearch"
+opensearch_storage_class: "local-path"
+opensearch_namespace: "logging"
+opensearch_release_name: "opensearch-cluster"
+# NodePort for OpenSearch service
+# This is the port that will be used to access OpenSearch from outside the cluster
+# Ensure kube_apiserver_node_port_range: "1024-32767" is set in #group_vars/k8s_cluster/kubespray.yml
+opensearch_nodeport_http: 9200
+# Environments tuning
+deployment_environment: development
+opensearch_environments:
+  development:
+    replicas: 3  # Number of replicas for the main chard
+    cpu_request: "500m"
+    cpu_limit: "2000m"
+    memory_request: "2Gi"
+    memory_limit: "3Gi"
+    storage_size: "10Gi"
+
+  acceptance:
+    replicas: 3  # Number of replicas for the main chard
+    cpu_request: "500m"
+    cpu_limit: "2000m"
+    memory_request: "2Gi"
+    memory_limit: "3Gi"
+    storage_size: "50Gi"
+
+  production:
+    replicas: 3 # Number of replicas for the main chard
+    cpu_request: "500m"
+    cpu_limit: "2000m"
+    memory_request: "2Gi"
+    memory_limit: "3Gi"
+    storage_size: "50Gi"

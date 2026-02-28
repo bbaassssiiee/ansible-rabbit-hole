@@ -1,0 +1,3 @@
+---
+kbcli_pkg_ext: "{{ (ansible_facts['os_family'] == 'RedHat') | ternary('rpm', 'deb') }}"
+kbcli_pkg_arch: "{{ (ansible_facts['architecture'] == 'x86_64') | ternary('amd64', 'arm64') }}"

@@ -1,0 +1,21 @@
+---
+# Tasks to reach desired state present with role ingress
+- name: Prepare template for OpenSearch Ingress
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ playbook_dir }}/files/{{ item }}"
+    mode: '0600'
+  loop:
+    - ingress-ui.yml
+
+- name: Create OpenSearch Ingress
+  kubernetes.core.k8s:
+    state: present
+    namespace: logging
+    definition: "{{ lookup('file', playbook_dir + '/files/{{ item }}') | from_yaml }}"
+    validate:
+      fail_on_error: true
+    wait: true
+    wait_timeout: 600
+  loop:
+    - ingress-ui.yml

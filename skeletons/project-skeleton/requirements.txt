@@ -1,0 +1,42 @@
+# Password hashing for user module and authentication tasks
+bcrypt
+# Docker API client for docker, docker_container, and docker_image modules
+docker
+# Helm Python SDK for kubernetes.core.helm and helm chart management
+helm-python
+# IP address utilities for network module calculations and validations
+ipaddress
+# Templating engine (core Ansible dependency for filters and templates)
+jinja2
+# JSON schema validation for configuration validation modules
+jsonschema
+# Kubernetes Python client for kubernetes.core collection modules
+kubernetes
+# Kubernetes manifest schema validation
+kubernetes-validate
+# Password hashing and verification for user management
+passlib
+# RabbitMQ Python client for AMQP messaging modules
+pika>=1.3.2
+# Development tools and pre-commit hooks for linting and testing
+pre-commit
+# PostgreSQL database adapter for postgresql_* modules
+psycopg2-binary>=2.9.9
+# MongoDB Python client for mongodb_* modules
+pymongo>=4.6.0
+# MySQL database adapter for mysql_* modules
+pymysql>=1.1.0
+# Redis Python client for redis_* modules
+redis>=5.0.0
+# System process utilities for system monitoring and service modules
+psutil
+# Interactive shell interaction for expect-like behavior in command modules
+pexpect
+# Proxmox VE API client for proxmox infrastructure modules
+proxmoxer
+# HTTP client library for RESTful API modules and URI tasks
+requests
+# HTTP connection pooling for requests library optimization
+urllib3
+# YAML parsing for configuration templating and data serialization
+PyYAML

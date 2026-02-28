@@ -1,0 +1,16 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Manage kbcli
+  hosts: '{{ controller | default("localhost") }}'
+  become: true
+  tags: [kbcli]
+
+  pre_tasks:
+    - name: Log desired_state
+      ansible.builtin.debug:
+        msg: "{{ desired_state }}"
+
+  tasks:
+    - name: Configure kbcli
+      ansible.builtin.include_role:
+        name: kbcli

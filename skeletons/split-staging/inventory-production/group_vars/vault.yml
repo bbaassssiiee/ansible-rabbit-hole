@@ -1,0 +1,17 @@
+---
+# inventory-production/group_vars/all/vault.yml
+#
+# This file MUST be encrypted with ansible-vault before committing.
+# Encrypt: ansible-vault encrypt group_vars/all/vault.yml
+# Edit:    ansible-vault edit group_vars/all/vault.yml
+# View:    ansible-vault view group_vars/all/vault.yml
+#
+# Convention: all variables here are prefixed with vault_
+# They are referenced in vars.yml as: db_password: "{{ vault_db_password }}"
+#
+# Use a DIFFERENT vault password for production than staging.
+# Store the production vault password separately with restricted access.
+
+vault_db_password: "CHANGEME_use_ansible_vault_encrypt"
+vault_smtp_password: "CHANGEME_use_ansible_vault_encrypt"
+vault_api_key: "CHANGEME_use_ansible_vault_encrypt"

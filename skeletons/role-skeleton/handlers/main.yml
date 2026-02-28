@@ -1,0 +1,25 @@
+---
+# handlers/main.yml
+#
+# Handlers run ONCE at the end of the play, regardless of how many tasks notified them.
+# This is what makes them different from a task with a when: condition.
+#
+# Naming: use the same string in notify: and in the handler name: exactly.
+# Convention: "restart <service>" or "reload <service>" — be specific.
+#
+# https://docs.ansible.com/ansible/latest/user_guide/playbooks_handlers.html
+#
+# 🐇 /explore handlers — when handlers don't fire (and why that surprises people)
+# 🐇 /explore listen — the decoupled handler pattern for complex roles
+
+- name: Control service
+  ansible.builtin.systemd:
+    name: "{{ service }}"
+    state: "{{ systemd_state }}"
+    enabled: "{{ systemd_enabled }}"
+    daemon_reload: true
+
+
+# Prefer 'reload' over 'restart' if the daemon supports it.
+# reload = no connection drop. restart = brief outage.
+# Not all daemons support reload — check the service's documentation.

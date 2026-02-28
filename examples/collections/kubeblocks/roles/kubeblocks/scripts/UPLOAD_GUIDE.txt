@@ -1,0 +1,170 @@
+Upload Scripts Guide
+====================
+
+Three scripts provided for different use cases:
+
+1. upload_single.sh - Upload one file at a time (improved version of your original)
+2. upload_mirror.sh - Sequential upload of all files (safer, easier to debug)
+3. upload_mirror_parallel.sh - Parallel uploads (faster, for large mirrors)
+
+
+Quick Start
+-----------
+
+# Make scripts executable
+chmod +x upload_single.sh upload_mirror.sh upload_mirror_parallel.sh
+
+# Upload entire mirror (sequential)
+./upload_mirror.sh downloaded_charts
+
+# Upload single file
+./upload_single.sh chart.tgz redis-1.0.1
+
+
+Detailed Usage
+--------------
+
+### 1. upload_single.sh (Single File Upload)
+
+Upload a single file with better error handling:
+
+# Upload to root
+./upload_single.sh myfile.tgz
+
+# Upload to specific directory
+./upload_single.sh myfile.tgz redis-1.0.1
+
+# Upload with full relative path
+./upload_single.sh myfile.tgz redis-1.0.1/redis-1.0.1.tgz
+
+### 2. upload_mirror.sh (Sequential Upload)
+
+Best for: First-time uploads, debugging, reliability
+
+# Basic usage
+./upload_mirror.sh downloaded_charts
+
+Features:
+- Uploads one file at a time
+- Shows detailed progress for each file
+- Easy to spot and fix errors
+- Resumes from where it left off if interrupted
+- Color-coded output
+
+
+### 3. upload_mirror_parallel.sh (Parallel Upload)
+
+Best for: Large mirrors, faster uploads, re-runs
+
+# Basic usage (5 parallel uploads)
+./upload_mirror_parallel.sh downloaded_charts
+
+# With custom parallelism (10 uploads at once)
+./upload_mirror_parallel.sh downloaded_charts 10
+
+# Conservative (3 uploads at once)
+./upload_mirror_parallel.sh downloaded_charts 3
+
+Features:
+- Much faster for large mirrors
+- Configurable parallelism
+- Shows summary of success/failures
+- Good for servers that can handle concurrent uploads
+
+
+Choosing the Right Script
+-------------------------
+
+Use upload_single.sh when:
+- Testing a single chart upload
+- Manually fixing a failed upload
+- Integrating with other scripts
+
+Use upload_mirror.sh when:
+- First time uploading the mirror
+- You want to see detailed progress
+- Network is unstable
+- Debugging upload issues
+
+Use upload_mirror_parallel.sh when:
+- Re-uploading after partial failure
+- Mirror is large (50+ files)
+- Network and server are stable
+- You want maximum speed
+
+
+Resume After Failure
+--------------------
+
+All scripts skip already-uploaded files by checking HTTP response codes.
+To resume after a failure:
+
+# Just run the same command again
+./upload_mirror.sh downloaded_charts
+
+The script will skip files that are already on the server.
+
+
+One-Liner Alternatives
+----------------------
+
+If you prefer one-liners:
+
+# Sequential upload (bash loop)
+eval $(ansible-vault view ~/.filerepo); \
+cd downloaded_charts && \
+find . -name "*.tgz" | while read f; do \
+    dir=$(dirname "$f" | sed 's|^\./||'); \
+    file=$(basename "$f"); \
+    [ "$dir" = "." ] && url="$BASE_URL/$file" || url="$BASE_URL/$dir/$file"; \
+    echo "Uploading $f to $url"; \
+    curl -u "$USERNAME:$PASSWORD" -T "$f" "$url" --create-dirs; \
+done
+
+# Parallel upload (GNU parallel)
+eval $(ansible-vault view ~/.filerepo); \
+cd downloaded_charts && \
+find . -name "*.tgz" | \
+parallel -j 5 'curl -u "$USERNAME:$PASSWORD" -T {} "$BASE_URL/{}" --create-dirs'
+
+
+Troubleshooting
+---------------
+
+Problem: "HTTP 401" errors
+Solution: Check credentials in ~/.filerepo
+
+Problem: "HTTP 403" errors
+Solution: Check user permissions on server
+
+Problem: "HTTP 409" or "HTTP 500" errors
+Solution: Directory might need to be created manually first
+
+Problem: Some files fail randomly
+Solution: Use sequential upload (upload_mirror.sh) or reduce parallelism
+
+Problem: Upload is very slow
+Solution: Increase parallelism in upload_mirror_parallel.sh
+
+
+Advanced: Dry Run
+-----------------
+
+To see what would be uploaded without actually uploading:
+
+# Add this to any script before the curl command:
+echo "Would upload: $filepath to $UPLOAD_URL"
+# curl -u ... (comment out the curl line)
+
+
+Advanced: Only Upload Missing Files
+------------------------------------
+
+To check and only upload missing files:
+
+# Modify script to check if file exists first:
+curl -I -u "$USERNAME:$PASSWORD" "$UPLOAD_URL" 2>/dev/null | grep -q "200 OK"
+if [ $? -ne 0 ]; then
+    # File doesn't exist, upload it
+    curl -u "$USERNAME:$PASSWORD" -T "$filepath" "$UPLOAD_URL"
+fi

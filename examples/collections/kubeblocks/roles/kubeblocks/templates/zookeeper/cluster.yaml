@@ -1,0 +1,62 @@
+apiVersion: apps.kubeblocks.io/v1
+kind: Cluster
+metadata:
+  name: zookeeper-cluster
+  namespace: "{{ db_namespace }}"
+spec:
+  # Specifies the behavior when a Cluster is deleted.
+  # Valid options are: [DoNotTerminate, Delete, WipeOut] (`Halt` is deprecated since KB 0.9)
+  # - `DoNotTerminate`: Prevents deletion of the Cluster. This policy ensures that all resources remain intact.
+  # - `Delete`: Extends the `Halt` policy by also removing PVCs, leading to a thorough cleanup while removing all persistent data.
+  # - `WipeOut`: An aggressive policy that deletes all Cluster resources, including volume snapshots and backups in external storage. This results in complete data removal and should be used cautiously, primarily in non-production environments to avoid irreversible data loss.
+  terminationPolicy: Delete
+  # Specifies a list of ClusterComponentSpec objects used to define the
+  # individual Components that make up a Cluster.
+  # This field allows for detailed configuration of each Component within the Cluster
+  componentSpecs:
+    - name: zookeeper
+      componentDef: zookeeper
+      # ServiceVersion specifies the version of the Service expected to be
+      # provisioned by this Component.
+      # Valid options are: [3.4.14,3.6.4,3.7.2,3.8.4,3.9.2]
+      serviceVersion: "3.7.2"
+      # Update `replicas` to your need.
+      replicas: 3
+      # Specifies the resources required by the Component.
+      resources:
+        limits:
+          cpu: "{{ db_cpu_limit | d('0.5') }}"
+          memory: "{{ db_memory_limit | d('0.5Gi') }}"
+        requests:
+          cpu: "{{ db_cpu_request | d('0.5') }}"
+          memory: "{{ db_memory_request | d('0.5Gi') }}"
+      # Specifies a list of PersistentVolumeClaim templates that define the storage
+      # requirements for the Component.
+      volumeClaimTemplates:
+        # Refers to the name of a volumeMount defined in
+        # `componentDefinition.spec.runtime.containers[*].volumeMounts
+        - name: data
+          spec:
+            # The name of the StorageClass required by the claim.
+            # If not specified, the StorageClass annotated with
+            # `storageclass.kubernetes.io/is-default-class=true` will be used by default
+            storageClassName: "{{ db_storage_class }}"
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                # Set the storage size as needed
+                storage: "{{ db_storage }}"
+        # Refers to the name of a volumeMount defined in
+        # `componentDefinition.spec.runtime.containers[*].volumeMounts
+        - name: snapshot-log
+          spec:
+            # The name of the StorageClass required by the claim.
+            # If not specified, the StorageClass annotated with
+            # `storageclass.kubernetes.io/is-default-class=true` will be used by default
+            storageClassName: "{{ db_storage_class }}"
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: "{{ db_storage }}"

@@ -1,0 +1,7 @@
+---
+# defaults file for ingress
+domain_name: cluster.local
+opensearch_namespace: "logging"
+
+# Optional: Define a whitelist of source IP ranges for access control
+# whitelist_source_range: "127.0.0.1/32,10.0.0.0/8"

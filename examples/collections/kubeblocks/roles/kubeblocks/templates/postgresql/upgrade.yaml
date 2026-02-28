@@ -1,0 +1,14 @@
+apiVersion: operations.kubeblocks.io/v1alpha1
+kind: OpsRequest
+metadata:
+  name: pg-upgrade
+  namespace: "{{ db_namespace }}"
+spec:
+  # Specifies the name of the Cluster resource that this operation is targeting.
+  clusterName: pg-cluster
+  type: Upgrade
+  upgrade:
+    components:
+    - componentName: postgresql
+      # Specifies the desired service version of component
+      serviceVersion: "{{ db_version }}"

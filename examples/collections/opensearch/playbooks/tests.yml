@@ -1,0 +1,21 @@
+#! /usr/bin/env ansible-playbook
+---
+# Usage: ansible-playbook playbooks/filtertest.yml -e "password=your_password"
+
+- name: Test filter plugin
+  hosts: localhost
+  become: false
+  connection: local
+
+  tasks:
+
+    - name: Assert that the password is defined
+      ansible.builtin.assert:
+        that:
+          - password is defined
+          - password | length > 6
+          - password is string
+
+    - name: Hash my password
+      ansible.builtin.debug:
+        msg: '{{ password | bcrypt_hash() }}'

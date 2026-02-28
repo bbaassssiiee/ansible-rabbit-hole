@@ -1,0 +1,44 @@
+---
+# Ingress for Opensearch dashboards
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: opensearch-cluster-dashboards-ingress
+  namespace: "{{ opensearch_namespace }}"
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "ca-issuer"
+    #nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # Optional: Increase proxy timeouts for large queries/visualizations
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    # Optional: Increase client body size for data uploads
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # Optional access allowed from this list
+{% if whitelist_source_range is defined %}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ whitelist_source_range }}"
+{% endif %}
+    nginx.ingress.kubernetes.io/custom-http-headers: |
+      X-Frame-Options: DENY
+      X-Content-Type-Options: nosniff
+      X-XSS-Protection: 1; mode=block
+      Referrer-Policy: strict-origin-when-cross-origin
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - opensearch.{{ domain_name }}
+      secretName: opensearch-tls
+  rules:
+    - host: opensearch.{{ domain_name }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: opensearch-cluster-dashboards
+                port:
+                  number: 5601

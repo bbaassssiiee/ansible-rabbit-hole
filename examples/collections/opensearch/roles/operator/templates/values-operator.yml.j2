@@ -1,0 +1,51 @@
+---
+# OpenSearch Operator values file
+
+manager:
+  image:
+    repository: "{{ registry_host }}/{{ containers_to_deploy.opensearch_operator.image }}"
+    tag: "{{containers_to_deploy.opensearch_operator.tag}}@{{containers_to_deploy.opensearch_operator.digest}}"
+    pullPolicy: "IfNotPresent"
+{% if registry_user is defined and registry_pass is defined %}
+  imagePullSecrets:
+    - name: artifactory-regcred
+{% endif %}
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# RBAC settings
+rbac:
+  create: true
+
+kubeRbacProxy:
+  resources:
+    limits:
+      memory: 50Mi
+    requests:
+      cpu: 25m
+      memory: 25Mi
+  image:
+    repository: "{{ registry_host }}/{{ containers_to_deploy.kube_rbac_proxy.image }}"
+    tag: "{{ containers_to_deploy.kube_rbac_proxy.tag }}@{{containers_to_deploy.kube_rbac_proxy.digest}}"
+    pullPolicy: "IfNotPresent"
+  imagePullSecrets:
+    - name: artifactory-regcred
+
+# Service account
+serviceAccount:
+  create: true
+  name: "opensearch-operator-controller-manager"
+
+# Webhook configuration
+webhook:
+  port: 9443
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532

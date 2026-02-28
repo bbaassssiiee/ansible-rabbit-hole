@@ -1,0 +1,10 @@
+# kbcli
+desired_state: present
+debug: false
+verify_state: true
+use_kbcli: true
+kbcli_version: v1.0.1
+kbcli_download_package: true
+kbcli_repo_url: 'https://github.com/apecloud/kbcli/releases/download'
+kbcli_download_url: "{{ kbcli_repo_url }}/{{ kbcli_version }}/kbcli-linux-{{ kbcli_pkg_arch }}-{{ kbcli_version }}.{{ kbcli_pkg_ext }}"
+kbcli_path: /usr/local/bin

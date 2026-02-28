@@ -1,0 +1,11 @@
+---
+
+- name: Remove package
+  ansible.builtin.package:
+    name: kbcli
+    state: absent
+
+- name: Remove cached package
+  ansible.builtin.file:
+    path: "/tmp/kbcli.{{ kbcli_pkg_ext }}"
+    state: absent

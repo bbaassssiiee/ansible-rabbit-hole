@@ -1,0 +1,23 @@
+galaxy_info:
+  author: Bas Meijer
+  description: Install Kubeblocks
+  namespace: otobots
+  role_name: kubeblocks
+  license: MIT
+
+  min_ansible_version: "2.16"
+
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Debian
+      versions:
+        - trixie
+
+  galaxy_tags:
+    - development
+    - kubernetes
+
+dependencies: []

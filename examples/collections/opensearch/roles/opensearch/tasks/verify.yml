@@ -1,0 +1,61 @@
+---
+# Verify desired state as a test of role cluster
+
+- name: Check available storage classes
+  when: desired_state == 'present'
+  kubernetes.core.k8s_info:
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+  register: storage_classes
+
+- name: Display available storage classes
+  when: desired_state == 'present'
+  ansible.builtin.debug:
+    msg: |
+      Available Storage Classes:
+      {% for sc in storage_classes.resources %}
+      - {{ sc.metadata.name }}{% if sc.metadata.annotations['storageclass.kubernetes.io/is-default-class'] == 'true' %} (default){% endif %}
+      {% endfor %}
+
+- name: Display deployment configuration
+  when: desired_state == 'present'
+  ansible.builtin.debug:
+    msg: |
+      Deployment Configuration:
+      - Environment: {{ deployment_environment }}
+      - Namespace: {{ opensearch_namespace }}
+      - Replicas: {{ opensearch_replicas }}
+      - CPU Request/Limit: {{ opensearch_cpu_request }}/{{ opensearch_cpu_limit }}
+      - Memory Request/Limit: {{ opensearch_memory_request }}/{{ opensearch_memory_limit }}
+      - Storage Class: {{ opensearch_storage_class }}
+      - Storage Size: {{ opensearch_storage_size }}
+
+- name: Wait for opensearch cluster pods to be running
+  vars:
+    max_retries: 20
+    delay_between_checks: 5
+  block:
+    - name: Get opensearch cluster pods information
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ opensearch_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/instance={{ opensearch_release_name }}"
+      register: cluster_pods
+
+    - name: Display opensearch cluster pods status
+      ansible.builtin.debug:
+        msg: "{{ cluster_pods }}"
+
+- name: Display OpenSearch cluster help
+  when: desired_state == 'present'
+  ansible.builtin.debug:
+    msg: |
+      To access OpenSearch:
+      1. Port forward: kubectl port-forward -n logging svc/opensearch-cluster 9200:9200
+      2. Access: https://localhost:9200
+
+      To access OpenSearch Dashboards:
+      1. Port forward: kubectl port-forward -n logging svc/opensearch-cluster-dashboards 5601:5601
+      2. Access: https://localhost:5601

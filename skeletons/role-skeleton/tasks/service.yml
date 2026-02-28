@@ -1,0 +1,16 @@
+---
+# tasks/service.yml
+#
+# Service state management only.
+# Conditional on role_name_manage_service so the role can be used
+# on systems where the service is managed externally (e.g. containers).
+#
+# 🐇 /explore service-management — started/stopped, enabled, masked
+
+- name: "{{ role_name }} | Manage service state"
+  ansible.builtin.service:
+    name: "{{ role_name_service_name }}"
+    state: "{{ role_name_service_state }}"
+    enabled: "{{ role_name_service_enabled }}"
+  # Do NOT put this in handlers. Handlers are for "restart after config change".
+  # This task is for "ensure the service is in the right state".

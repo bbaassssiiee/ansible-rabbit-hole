@@ -1,0 +1,29 @@
+### REQUIRED
+namespace: otobots
+name: kubeblocks
+version: 1.0.1
+readme: README.md
+authors:
+- Bas Meijer <bas.meijer@enexis.nl>
+
+### OPTIONAL but strongly recommended
+description: Stateful work loads for Kubernetes implemented with Ansible.
+license:
+- MIT
+license_file: ''
+
+tags:
+- infrastructure
+- monitoring
+
+dependencies: {}
+
+repository: https://codeberg.org/otobots/ansible-kubeblocks
+documentation: https://codeberg.org/otobots/ansible-kubeblocks/README.md
+
+build_ignore:
+- .ansible
+- .ansible-lint
+- .gitattributes
+- .gitignore
+- .yamllint

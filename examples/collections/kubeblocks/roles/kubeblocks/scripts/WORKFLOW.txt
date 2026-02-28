@@ -1,0 +1,205 @@
+Complete Helm Chart Mirror Workflow
+====================================
+
+A complete solution for downloading and mirroring Helm charts from ApeCloud repository.
+
+
+Full Workflow
+-------------
+
+Step 1: Download Charts
+-----------------------
+# Install dependencies
+pip install -r requirements.txt
+
+# Scrape chart metadata from repository
+python3 scrape_helm_charts.py
+
+# Download all v1.0.1 charts with mirror structure
+python3 download_charts.py -o my-mirror
+
+Result: Directory structure like:
+my-mirror/
+├── redis-1.0.1/
+│   └── redis-1.0.1.tgz
+├── kafka-1.0.1/
+│   └── kafka-1.0.1.tgz
+└── ... (90+ charts)
+
+
+Step 2: Upload to Your Mirror
+------------------------------
+# Make script executable
+chmod +x upload_*.sh
+
+./upload_mirror.sh my-mirror
+
+
+
+Step 3: Configure Helm to Use Your Mirror
+------------------------------------------
+# Original repo
+helm repo add apecloud https://github.com/apecloud/helm-charts/releases/download/
+
+# Your mirror
+helm repo add apecloud https://{{ files_repo }}/generic-480-local/apecloud.github.io/helm-charts/
+
+# Update and use
+helm repo update
+helm search repo apecloud
+helm install redis apecloud/redis --version 1.0.1
+
+
+Files Included
+--------------
+
+Download Scripts:
+  scrape_helm_charts.py        - Scrape v1.0.1 charts from index.yaml
+  download_charts.py           - Download charts with mirror structure
+  requirements.txt             - Python dependencies
+
+Upload Script:
+  upload_mirror.sh             - Sequential upload (safe)
+
+Documentation:
+  README.md                    - Main documentation
+  UPLOAD_GUIDE.txt            - Detailed upload guide
+  WORKFLOW.txt                - This file
+
+
+Quick Reference
+---------------
+
+# Download everything
+python3 scrape_helm_charts.py && python3 download_charts.py
+
+# Upload everything (fast)
+./upload_mirror_parallel.sh downloaded_charts 10
+
+# Check what was downloaded
+find downloaded_charts -name "*.tgz" | wc -l
+
+# List all chart names
+find downloaded_charts -name "*.tgz" -exec basename {} .tgz \;
+
+
+Common Scenarios
+----------------
+
+Scenario 1: Fresh Mirror Setup
+-------------------------------
+python3 scrape_helm_charts.py
+python3 download_charts.py -o /data/helm-mirror
+./upload_mirror.sh /data/helm-mirror
+
+
+Scenario 2: Update Existing Mirror
+-----------------------------------
+# Download new charts
+python3 download_charts.py -o /data/helm-mirror
+
+# Upload only new files (parallel)
+./upload_mirror_parallel.sh /data/helm-mirror 10
+
+
+Scenario 3: Fix Failed Upload
+------------------------------
+# Check failed files in output
+./upload_mirror.sh /data/helm-mirror
+
+# Or fix specific file
+./upload_single.sh /data/helm-mirror/redis-1.0.1/redis-1.0.1.tgz
+
+
+Scenario 4: Multiple Version Support
+-------------------------------------
+# Edit scrape_helm_charts.py to change target_version
+sed -i 's/target_version = "1.0.1"/target_version = "1.0.0"/' scrape_helm_charts.py
+
+# Download that version
+python3 scrape_helm_charts.py
+python3 download_charts.py -o helm-mirror-v1.0.0
+
+# Upload
+./upload_mirror_parallel.sh helm-mirror-v1.0.0 5
+
+
+Customization
+-------------
+
+Change Download Version:
+  Edit scrape_helm_charts.py, line: target_version = "1.0.1"
+
+Change Base URL:
+  python3 download_charts.py -b "https://your-source.com/"
+
+Change Upload Parallelism:
+  ./upload_mirror_parallel.sh my-mirror 20  # 20 parallel uploads
+
+Change Output Directory:
+  python3 download_charts.py -o /custom/path
+
+
+Automation
+----------
+
+Full Automation Script:
+
+#!/bin/bash
+set -e
+
+# Configuration
+MIRROR_DIR="/data/helm-mirror"
+VERSION="1.0.1"
+PARALLEL_JOBS=10
+
+# Download
+python3 scrape_helm_charts.py
+python3 download_charts.py -o "$MIRROR_DIR"
+
+# Upload
+./upload_mirror_parallel.sh "$MIRROR_DIR" "$PARALLEL_JOBS"
+
+# Verify
+DOWNLOADED=$(find "$MIRROR_DIR" -name "*.tgz" | wc -l)
+echo "Mirror updated with $DOWNLOADED charts"
+
+
+Cron Job Example:
+
+# Update mirror daily at 2 AM
+0 2 * * * cd /path/to/scripts && ./update_mirror.sh >> /var/log/helm-mirror.log 2>&1
+
+
+Tips
+----
+
+1. Test with single file first:
+   ./upload_single.sh /path/to/test-chart.tgz
+
+2. Use sequential upload for first upload:
+   ./upload_mirror.sh my-mirror
+
+3. Use parallel upload for updates:
+   ./upload_mirror_parallel.sh my-mirror 10
+
+4. Monitor disk space:
+   du -sh downloaded_charts/
+
+5. Validate downloads before upload:
+   find downloaded_charts -name "*.tgz" -size -1k  # Find suspiciously small files
+
+6. Keep credentials secure:
+   chmod 600 ~/.filerepo
+   ansible-vault encrypt ~/.filerepo
+
+
+Support
+-------
+
+For issues:
+1. Check UPLOAD_GUIDE.txt for troubleshooting
+2. Verify credentials: ansible-vault view ~/.filerepo
+3. Test single file upload first
+4. Check server logs for HTTP errors
+5. Reduce parallelism if uploads fail randomly

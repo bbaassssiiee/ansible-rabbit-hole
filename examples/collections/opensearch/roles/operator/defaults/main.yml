@@ -1,0 +1,20 @@
+---
+# defaults file for operator
+debug: false
+containers_to_deploy:
+  opensearch_operator:
+    image: "opensearchproject/opensearch-operator"
+    tag: "2.8.0"
+    digest: "sha256:26cb6c7f4cb40787233ed1e113730208453f24b825acb38b535811909c583bdb"
+  kube_rbac_proxy:
+    image: "kubebuilder/kube-rbac-proxy"
+    tag: "v0.16.0"
+    digest: "sha256:739087a6da07ddfaf3339b35c42a6ac7e98d8b2ff5ac03e864e6652298d9a19a"
+
+# OpenSearch operator configuration
+operator_namespace: operators
+operator_release_name: logs  # composite metadata.names must be no more than 63 characters
+operator_chart_repo: helm-opensearch-k8s-operator
+operator_chart_url: "oci://{{ registry_host }}/helm-opensearch-k8s-operator/opensearch-operator"
+operator_chart_name: opensearch-operator
+operator_chart_version: '2.8.0'

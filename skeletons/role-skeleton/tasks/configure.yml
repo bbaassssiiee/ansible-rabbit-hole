@@ -1,0 +1,29 @@
+---
+# tasks/configure.yml
+#
+# File and configuration management only. No packages, no services.
+# Template tasks notify handlers — never restart services directly here.
+#
+# 🐇 /explore handlers — why notify is better than a direct service restart task
+
+- name: "{{ role_name }} | Create config directory"
+  ansible.builtin.file:
+    path: "{{ role_name_config_dir }}"
+    state: directory
+    owner: "{{ role_name_config_owner }}"
+    group: "{{ role_name_config_group }}"
+    mode: "{{ role_name_config_dir_mode }}"
+
+- name: "{{ role_name }} | Deploy configuration"
+  ansible.builtin.template:
+    src: "{{ role_name }}.conf.j2"
+    dest: "{{ role_name_config_dir }}/{{ role_name }}.conf"
+    owner: "{{ role_name_config_owner }}"
+    group: "{{ role_name_config_group }}"
+    mode: "{{ role_name_config_mode }}"
+    # validate: the-validate-command %s
+    # ↑ uncomment if the daemon has a config validation command (nginx -t, sshd -t)
+    backup: true
+    # ↑ keeps the previous config as .conf.TIMESTAMP — useful for rollback audit
+  notify: "restart {{ role_name }}"
+  # ↑ handler defined in handlers/main.yml — runs ONCE at end of play

@@ -1,0 +1,28 @@
+---
+# Verify desired state as a test of role operator
+# both absent and present could be verified.
+- name: Wait for operator pods to be running
+  vars:
+    max_retries: 20
+    delay_between_checks: 5
+  block:
+    - name: Get operator pods information
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ operator_namespace }}"
+        label_selectors:
+          - "control-plane=controller-manager"
+      register: operator_pods
+
+    - name: Check if pods are running
+      ansible.builtin.assert:
+        that:
+          - operator_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+      retries: "{{ max_retries }}"
+      delay: "{{ delay_between_checks }}"
+      until: operator_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+
+- name: Display operator status
+  ansible.builtin.debug:
+    msg: "OpenSearch operator pods: {{ operator_pods.resources | length }} running"

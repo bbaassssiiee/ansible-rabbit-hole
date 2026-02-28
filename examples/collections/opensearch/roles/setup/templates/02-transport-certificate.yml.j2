@@ -1,0 +1,35 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-transport-cert
+  namespace: "{{ opensearch_namespace }}"
+spec:
+  commonName: opensearch-transport
+  subject:
+    organizations:
+      - "{{ cluster_name }}"
+  isCA: false
+  duration: 2160h # 90 days
+  renewBefore: 360h # 15 days
+  issuerRef:
+    name: "{{ cluster_issuer }}"
+    kind: ClusterIssuer
+  dnsNames:
+    - localhost
+    - {{ cluster_name }}-nodes
+    - {{ cluster_name }}-nodes.{{ opensearch_namespace }}.svc
+    - {{ cluster_name }}-nodes.{{ opensearch_namespace }}.svc.cluster.local
+    - {{ cluster_name }}-data
+    - {{ cluster_name }}-data.{{ opensearch_namespace }}.svc
+    - {{ cluster_name }}-data.{{ opensearch_namespace }}.svc.cluster.local
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 4096
+  secretName: opensearch-transport-cert
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth

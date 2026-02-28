@@ -1,0 +1,47 @@
+---
+# meta/main.yml
+#
+# Role metadata: who made it, what it targets, what it depends on.
+# galaxy_info is required if you publish to Galaxy or a private hub.
+#
+# https://docs.ansible.com/ansible/latest/galaxy/dev_guide.html
+#
+# 🐇 /explore meta-dependencies — why explicit role includes beat meta dependencies
+
+galaxy_info:
+  author: {{ lookup('env','USER') }}  # or hardcode your name
+  description: "One sentence: what this role does."
+  role_name: {{ role_name }}  # Must match directory name
+  namespace: "{{ namespace }}"  # e.g. your GitHub org or username
+  license: MIT
+  # Ansible version this role requires
+  min_ansible_version: "2.17"
+  # Platforms tested against. Keep this accurate — it's the contract.
+  platforms:
+    - name: EL
+      versions:
+        - "all"  # or specific versions like 8, 9
+    - name: Debian
+      versions:
+        - "all"  # or specific versions like bookworm, trixie
+
+  galaxy_tags: []
+    # 1-20 tags: what does this role relate to?
+    # e.g. - web, proxy, nginx, security
+
+# ── Dependencies ─────────────────────────────────────────────────────────────
+# ⚠️ Anti-pattern warning: meta dependencies create hidden coupling.
+# A role that depends on another role via meta is harder to test, harder to
+# understand, and breaks selective execution.
+#
+# PREFER: explicit `roles:` in your playbook, or include_role in tasks/main.yml
+#         with a clear comment about why it's needed.
+#
+# USE meta dependencies ONLY when the dependency is truly always required
+# and the coupling is intentional and documented.
+dependencies: []
+# Example if you really need it:
+# dependencies:
+#   - role: common
+#     vars:
+#       common_something: value

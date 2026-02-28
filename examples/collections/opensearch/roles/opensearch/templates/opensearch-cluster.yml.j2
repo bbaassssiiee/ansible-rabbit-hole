@@ -1,0 +1,128 @@
+---
+apiVersion: opensearch.opster.io/v1
+kind: OpenSearchCluster
+metadata:
+  name: opensearch-cluster
+  namespace: {{ opensearch_namespace }}
+spec:
+  general:
+    serviceName: opensearch-cluster
+    version: "{{ containers_to_deploy.opensearch.tag }}"
+    defaultRepo: "{{ registry_host }}/opensearchproject"
+    image: "{{ registry_host }}/{{ containers_to_deploy.opensearch.image }}:{{containers_to_deploy.opensearch.tag}}@{{containers_to_deploy.opensearch.digest}}"
+    imagePullSecrets:
+      - name: artifactory-regcred
+    additionalConfig:
+      plugins.security.authcz.admin_dn: '["CN=admin,O=k8s"]'
+      plugins.security.nodes_dn: '["CN=opensearch-transport,O=k8s"]'
+      plugins.security.ssl.http.enabled: "true"
+      plugins.security.ssl.http.pemcert_filepath: tls-http/tls.crt
+      plugins.security.ssl.http.pemkey_filepath: tls-http/tls.key
+      plugins.security.ssl.http.pemtrustedcas_filepath: tls-http/ca.crt
+      plugins.security.ssl.transport.enforce_hostname_verification: "false"
+      plugins.security.ssl.transport.pemcert_filepath: tls-transport/tls.crt
+      plugins.security.ssl.transport.pemkey_filepath: tls-transport/tls.key
+      plugins.security.ssl.transport.pemtrustedcas_filepath: tls-transport/ca.crt
+      plugins.security.system_indices.enabled: "true"
+      plugins.security.system_indices.indices: '[".opendistro-alerting-config", ".opendistro-ism-*", ".opendistro-reports-*", ".opensearch-notifications-*", ".opensearch-notebooks", ".opensearch-observability", ".opendistro-asynchronous-search-response*", ".replication-metadata-store"]'
+      discovery.seed_hosts: "opensearch-cluster-discovery.logging.svc.cluster.local"
+
+
+  initHelper:
+    image: "{{ registry_host }}/{{ containers_to_deploy.opsterio_busybox.image }}:{{containers_to_deploy.opsterio_busybox.tag}}@{{containers_to_deploy.opsterio_busybox.digest}}"
+    imagePullSecrets:
+      - name: artifactory-regcred
+  dashboards:
+    enable: true
+    image: "{{ registry_host }}/{{ containers_to_deploy.opensearch_dashboards.image }}:{{containers_to_deploy.opensearch_dashboards.tag}}@{{containers_to_deploy.opensearch_dashboards.digest}}"
+    imagePullSecrets:
+      - name: artifactory-regcred
+    replicas: 1
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "300m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    version: "{{ containers_to_deploy.opensearch_dashboards.tag }}"
+    opensearchCredentialsSecret:
+      name: opensearch-dashboards-credentials
+    labels:
+      app: opensearch-cluster-dashboards
+      component: dashboards
+    tls:
+      enable: true
+      generate: false
+      secret:
+        name: opensearch-http-cert
+      caSecret:
+        name: ca-certificate
+    env:
+      - name: NODE_EXTRA_CA_CERTS
+        value: "/usr/share/opensearch-dashboards/config/certs/ca.crt"
+    additionalVolumes:
+      - name: custom-ca
+        path: /usr/share/opensearch-dashboards/config/certs
+        secret:
+          secretName: ca-certificate
+    additionalConfig:
+      opensearch.hosts: '["https://opensearch-cluster.logging.svc.cluster.local:9200"]'
+      opensearch_security.auth.type: "basicauth"
+      opensearch.ssl.verificationMode: "certificate"
+      opensearch.ssl.certificateAuthorities: '["/usr/share/opensearch-dashboards/config/certs/ca.crt"]'
+
+  confMgmt:
+    smartScaler: true
+
+  nodePools:
+    - component: nodes
+      replicas: {{ opensearch_replicas }}
+      diskSize: "{{ opensearch_storage_size }}"
+      env:
+        - name: "DISABLE_INSTALL_DEMO_CONFIG"
+          value: "true"
+      jvm: "-Xmx{{ (opensearch_memory_limit | regex_replace('Gi', '') | int / 2) | int }}g -Xms{{ (opensearch_memory_limit | regex_replace('Gi', '') | int / 2) | int }}g"
+      labels:
+        app: opensearch-cluster-nodes
+        component: data-master
+      persistence:
+        pvc:
+          storageClass: "{{ opensearch_storage_class }}"
+          accessModes:
+            - ReadWriteOnce
+      resources:
+        requests:
+          memory: "{{ opensearch_memory_request }}"
+          cpu: "{{ opensearch_cpu_request }}"
+        limits:
+          memory: "{{ opensearch_memory_limit }}"
+          cpu: "{{ opensearch_cpu_limit }}"
+      roles:
+        - "cluster_manager"
+        - "data"
+
+  security:
+    config:
+      adminCredentialsSecret:
+        name: opensearch-admin-credentials
+      adminSecret:
+        name: opensearch-admin-cert
+      securityConfigSecret:
+        name: opensearch-security-config
+    tls:
+      transport:
+        generate: false
+        secret:
+          name: opensearch-transport-cert
+        caSecret:
+          name: ca-certificate
+        adminDn: ["CN=admin,O=k8s"]
+        nodesDn: ["CN=opensearch-transport,O=k8s"]
+        perNode: false
+      http:
+        generate: false
+        secret:
+          name: opensearch-http-cert
+        caSecret:
+          name: ca-certificate

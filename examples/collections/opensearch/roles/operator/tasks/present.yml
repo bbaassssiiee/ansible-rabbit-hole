@@ -1,0 +1,21 @@
+---
+# Tasks to reach desired state present with role operator
+
+- name: Prepare values file from template
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ playbook_dir }}/files/{{ item }}"
+    mode: '0600'
+  loop:
+    - values-operator.yml
+
+- name: Deploy OpenSearch operator
+  kubernetes.core.helm:
+    name: "{{ operator_release_name }}"
+    chart_ref: "{{ operator_chart_url }}"
+    chart_version: "{{ operator_chart_version }}"
+    release_namespace: "{{ operator_namespace }}"
+    wait: true
+    timeout: "10m"
+    values_files:
+      - "{{ playbook_dir }}/files/values-operator.yml"

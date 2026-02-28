@@ -1,0 +1,45 @@
+---
+# defaults file for {{ role_name }}
+#
+# Every variable this role consumes is declared here.
+# This file IS the API of the role. Document it like one.
+# Override in: group_vars/, host_vars/, or playbook vars:
+#
+# Convention: all variables prefixed with the role name to avoid collisions.
+# 🐇 /explore variable-layering — why prefix matters in complex playbooks
+
+# ── Package management ──────────────────────────────────────────────────────
+# Packages to install. Override per OS family in vars/<family>.yml if needed.
+role_name_packages: []
+
+# Package state. Use 'present' for stability, 'latest' only if you pin in CI.
+# Anti-pattern: always 'latest' in production — /explore version-pinning
+role_name_package_state: present
+
+# ── Service management ──────────────────────────────────────────────────────
+# Set to false if managing the service externally (containers, other tooling).
+role_name_manage_service: true
+
+# Service name on the target OS. May differ from package name.
+role_name_service_name: "{{ role_name }}"
+
+# Desired runtime state.
+role_name_service_state: started
+
+# Whether to enable on boot.
+role_name_service_enabled: true
+
+# ── Configuration ───────────────────────────────────────────────────────────
+# Base directory for configuration files.
+role_name_config_dir: "/etc/{{ role_name }}"
+
+# Configuration file ownership and permissions.
+role_name_config_owner: root
+role_name_config_group: root
+role_name_config_dir_mode: "0755"
+role_name_config_mode: "0644"
+
+# ── Credentials (if role handles secrets) ───────────────────────────────────
+# NEVER set these here for production. Set in vault-encrypted group_vars.
+# The assert.yml task will fail if these are empty.
+# role_name_secret: ""  # REQUIRED: set in vault, do not commit plaintext

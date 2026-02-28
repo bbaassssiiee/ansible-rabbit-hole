@@ -1,0 +1,30 @@
+---
+# inventory-production/group_vars/all/vars.yml
+#
+# Plaintext variable references for production.
+# Values live in vault.yml (encrypted). This file is always plaintext.
+# Pattern: Vault Companion — see documents/patterns/vault-companion.md
+#
+# Why: grep works. Variable names are discoverable without decrypting.
+# 🐇 /explore vault-companion — the full pattern explained
+
+# ── Application ───────────────────────────────────────────────────────────
+app_environment: production
+app_debug: false
+app_log_level: warning
+
+# ── Database ──────────────────────────────────────────────────────────────
+# Values come from vault. Do not put real passwords here.
+db_host: prod-db-01.example.com
+db_port: 5432
+db_name: myapp_production
+db_user: myapp
+db_password: "{{ vault_db_password }}"
+
+# ── External services ────────────────────────────────────────────────────
+smtp_host: mail.example.com
+smtp_port: 587
+smtp_user: noreply@example.com
+smtp_password: "{{ vault_smtp_password }}"
+
+api_key: "{{ vault_api_key }}"

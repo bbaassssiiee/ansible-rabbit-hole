@@ -1,0 +1,4 @@
+---
+# desired_state in ['absent', 'present']
+- name: "Converge state - {{ desired_state }}"
+  ansible.builtin.include_tasks: "{{ desired_state }}.yml"

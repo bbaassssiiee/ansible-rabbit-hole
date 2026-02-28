@@ -1,0 +1,37 @@
+---
+# galaxy.yml
+#
+# The collection manifest. This is what ansible-galaxy reads.
+# Name: namespace.collection_name (e.g. acme.platform)
+# Namespace: usually your org name or GitHub handle.
+#
+# 🐇 /explore collections — why collections beat role directories
+# 🐇 /explore namespacing — avoiding collisions across teams
+
+namespace: yournamespace       # your org, GitHub handle, or team name
+name: collection_name          # the collection name (no hyphens, use underscores)
+version: 0.1.0                 # semver — bump on breaking changes
+readme: README.md
+authors:
+  - Your Name <you@example.com>
+description: "One sentence: what this collection does."
+license:
+  - MIT
+tags:
+  # 1-20 tags for discovery on Galaxy
+  - linux
+  - infrastructure
+dependencies:
+  # Other collections this one requires
+  # ansible.netcommon: ">=2.0.0"
+  # community.general: ">=5.0.0"
+repository: https://github.com/yourorg/ansible-collection-collection_name
+documentation: https://github.com/yourorg/ansible-collection-collection_name/blob/main/README.md
+homepage: https://github.com/yourorg/ansible-collection-collection_name
+issues: https://github.com/yourorg/ansible-collection-collection_name/issues
+build_ignore:
+  - "*.tar.gz"
+  - ".git"
+  - ".github"
+  - "molecule"
+  - "tests"

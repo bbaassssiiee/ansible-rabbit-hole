@@ -1,0 +1,85 @@
+#!/usr/bin/env ansible-playbook
+---
+# Usage: ansible-playbook playbooks/cluster.yml -e "opensearch_namespace=logging-production" -e "desired_state=present"
+# This playbook manages the OpenSearch cluster configuration and deployment.
+
+- name: Setup
+  hosts: localhost
+  become: false
+  connection: local
+  tags: [setup]
+
+  tasks:
+    - name: Setup
+      when: desired_state == 'present'
+      ansible.builtin.include_role:
+        name: setup
+
+- name: Install Operator
+  hosts: localhost
+  become: false
+  connection: local
+  tags: [operator]
+
+  tasks:
+    - name: Configure Operator
+      when: desired_state == 'present'
+      ansible.builtin.include_role:
+        name: operator
+
+- name: OpenSearch
+  hosts: localhost
+  become: false
+  connection: local
+  tags: [opensearch]
+
+  pre_tasks:
+    - name: Log desired_state
+      ansible.builtin.debug:
+        msg: "{{ desired_state }}"
+
+  tasks:
+    - name: Configure Cluster
+      ansible.builtin.include_role:
+        name: opensearch
+
+- name: Ingress
+  hosts: localhost
+  become: false
+  connection: local
+  tags: [ingress]
+
+  pre_tasks:
+    - name: Log desired_state
+      ansible.builtin.debug:
+        msg: "{{ desired_state }}"
+
+  tasks:
+    - name: Configure Ingress
+      ansible.builtin.include_role:
+        name: ingress
+
+- name: Remove Operator
+  hosts: localhost
+  become: false
+  connection: local
+  tags: [operator]
+
+  tasks:
+    - name: Remove Operator
+      when: desired_state == 'absent'
+      ansible.builtin.include_role:
+        name: operator
+
+- name: Teardown
+  hosts: localhost
+  become: false
+  connection: local
+  tags: [setup]
+
+  tasks:
+    - name: Remove secrets, certificates and namespaces
+      when:
+        - desired_state == 'absent'
+      ansible.builtin.include_role:
+        name: setup

@@ -1,0 +1,43 @@
+---
+# Tasks to converge to state absent for cluster
+# k delete opensearchcluster opensearch-cluster
+- name: Destroy OpenSearch cluster
+  kubernetes.core.k8s:
+    state: absent
+    namespace: "{{ opensearch_namespace }}"
+    definition:
+      apiVersion: opensearch.opster.io/v1
+      kind: OpenSearchCluster
+      metadata:
+        name: opensearch-cluster
+    wait: true
+    wait_timeout: 600
+
+- name: Destroy OpenSearch PersistentVolumeClaims
+  kubernetes.core.k8s:
+    state: absent
+    namespace: "{{ opensearch_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: "data-opensearch-cluster-nodes-{{ item }}"
+    wait: true
+    wait_timeout: 600
+  loop: "{{ range(0, opensearch_replicas | int) }}"
+
+- name: Cleanup kube template
+  when: debug | bool
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/files/opensearch-cluster.yml"
+    state: absent
+
+- name: Undeploy monitoring namespace
+  when: debug | bool
+  kubernetes.core.k8s:
+    name: monitoring
+    api_version: v1
+    kind: Namespace
+    state: absent
+    wait: true
+    wait_timeout: 300

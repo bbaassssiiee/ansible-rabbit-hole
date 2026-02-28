@@ -1,0 +1,3 @@
+---
+# Verify desired state as a test of role ingress
+# both absent and present could be verified.

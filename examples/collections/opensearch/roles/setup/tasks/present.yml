@@ -1,0 +1,109 @@
+---
+# File: roles/setup/tasks/present.yml
+# Tasks to converge to state present for setup
+
+- name: Create namespaces
+  kubernetes.core.k8s:
+    name: "{{ item.key }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+    validate:
+      fail_on_error: true
+  loop: "{{ namespaces | dict2items }}"
+  loop_control:
+    label: '{{ item.key }}'
+  when: item.value.create | bool
+
+- name: Generate dockerconfigjson
+  when:
+    - registry_host is defined
+    - registry_user is defined
+    - registry_pass is defined
+  ansible.builtin.set_fact:
+    # yamllint disable-line rule:line-length
+    dockerconfigjson: '{{ {"auths": {registry_host: {"username": registry_user, "password": registry_pass, "auth": (registry_user + ":" + registry_pass) | b64encode}}} | to_json }}'
+  no_log: true
+
+- name: Base64 encode dockerconfigjson
+  when:
+    - registry_host is defined
+    - registry_user is defined
+    - registry_pass is defined
+  ansible.builtin.set_fact:
+    encoded_dockerconfigjson: '{{ dockerconfigjson | b64encode }}'
+  no_log: true
+
+- name: Create imagePullSecret
+  when:
+    - registry_host is defined
+    - registry_user is defined
+    - registry_pass is defined
+    - item.value.deployRegCred | bool
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "artifactory-regcred"
+        namespace: "{{ item.key }}"
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: "{{ encoded_dockerconfigjson }}"
+    validate:
+      fail_on_error: true
+  loop: "{{ namespaces | dict2items }}"
+  loop_control:
+    label: '{{ item.key }}'
+  no_log: "{{ not debug }}"
+
+- name: Save registry credentials
+  when: registry_host is defined and registry_user is defined and registry_pass is defined
+  environment:  # do not leak this password in the logs
+    REGISTRY_PASS: "{{ registry_pass }}"
+  ansible.builtin.command: "helm registry login {{ registry_host }} --username {{ registry_user }} --password $REGISTRY_PASS"
+  changed_when: true
+  no_log: "{{ not debug }}"
+
+- name: Get ClusterIssuer CA certificate
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ ca_secret_name | d('ca-key-pair') }}"
+    namespace: "{{ ca_secret_namespace | d('cert-manager') }}"
+  register: ca_secret
+
+- name: Extract CA certificate
+  ansible.builtin.set_fact:
+    ca_cert: "{{ ca_secret.resources[0].data['ca.crt'] }}"
+  when: ca_secret.resources | length > 0
+
+- name: Prepare directory for k8s templates
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/files"
+    state: directory
+    mode: '0700'
+
+- name: Prepare templates for certificates
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ playbook_dir }}/files/{{ item }}"
+    mode: '0600'
+  loop:
+    - 01-ca-secret.yml
+    - 02-admin-certificate.yml
+    - 02-http-certificate.yml
+    - 02-transport-certificate.yml
+
+- name: Install certificates
+  kubernetes.core.k8s:
+    definition: "{{ lookup('file', playbook_dir + '/files/{{ item }}') | from_yaml }}"
+    state: present
+    wait: true
+    wait_timeout: 120
+  loop:
+    - 01-ca-secret.yml
+    - 02-admin-certificate.yml
+    - 02-http-certificate.yml
+    - 02-transport-certificate.yml

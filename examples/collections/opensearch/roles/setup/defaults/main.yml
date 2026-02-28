@@ -1,0 +1,15 @@
+---
+# File: roles/setup/defaults/main.yml
+cluster_issuer: ca-issuer
+debug: false
+domain_name: cluster.local
+opensearch_namespace: "logging"
+namespaces:
+  operators:
+    create: true
+    deployCaSecret: true
+    deployRegCred: true
+  logging:
+    create: true
+    deployCaSecret: true
+    deployRegCred: true

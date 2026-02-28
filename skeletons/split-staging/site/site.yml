@@ -1,0 +1,44 @@
+---
+# site/site.yml
+#
+# The entry point playbook. Lives in the playbooks repo (no secrets here).
+# Inventory is always passed via -i, never hardcoded.
+#
+# Run against staging:
+#   ansible-playbook -i ../inventory-staging/ site.yml
+#
+# Run against production:
+#   ansible-playbook -i ../inventory-production/ site.yml --vault-password-file ~/.vault-prod
+#
+# Run only web tier:
+#   ansible-playbook -i ../inventory-production/ site.yml --limit webservers
+#
+# Dry run:
+#   ansible-playbook -i ../inventory-production/ site.yml --check --diff
+#
+# 🐇 /explore check-mode — what --check can and cannot tell you
+
+- name: "Apply common baseline to all hosts"
+  hosts: all
+  become: true
+  roles:
+    - role: common
+      tags: [common]
+
+- name: "Configure web tier"
+  hosts: webservers
+  become: true
+  roles:
+    - role: nginx
+      tags: [nginx, web]
+    - role: app_deploy
+      tags: [app, deploy]
+
+- name: "Configure database tier"
+  hosts: databases
+  become: true
+  serial: 1                   # ← Roll databases one at a time, not all at once
+  # 🐇 /explore serial — rolling updates, max_fail_percentage
+  roles:
+    - role: postgresql
+      tags: [postgresql, db]

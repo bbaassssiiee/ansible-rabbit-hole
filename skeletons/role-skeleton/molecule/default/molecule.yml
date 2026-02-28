@@ -1,0 +1,60 @@
+---
+# molecule/default/molecule.yml
+#
+# The default scenario: one platform, full converge + verify + lint.
+# Add scenarios in molecule/<scenario_name>/ for multi-platform or edge cases.
+#
+# 🐇 /explore molecule-scenarios — when you need more than one scenario
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: molecule/requirements.yml
+    # Create this file if the role has Galaxy dependencies to install in Molecule
+
+driver:
+  name: docker
+
+platforms:
+  - name: instance-el9
+    image: geerlingguy/docker-rockylinux9-ansible
+    pre_build_image: true
+    privileged: false
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command: /usr/lib/systemd/systemd
+    # ↑ Required for systemd service testing
+
+  # Add more platforms to test cross-distro:
+  # - name: instance-debian12
+  #   image: geerlingguy/docker-debian12-ansible
+  #   pre_build_image: true
+  #   privileged: false
+  #   cgroupns_mode: host
+  #   volumes:
+  #     - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  #   command: /usr/lib/systemd/systemd
+
+provisioner:
+  name: ansible
+  playbooks:
+    converge: converge.yml
+    verify: verify.yml
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks
+      # ↑ Shows timing per task — useful for spotting slow tasks in CI
+  env:
+    # Pass test-specific variables here (NOT production secrets)
+    # ROLE_NAME_THING: "test_value"
+    PY_COLORS: "1"
+    ANSIBLE_FORCE_COLOR: "1"
+
+verifier:
+  name: ansible
+
+lint: |
+  set -e
+  ansible-lint
+  # yamllint . (add if you have a .yamllint config)

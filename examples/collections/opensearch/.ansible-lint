@@ -1,0 +1,13 @@
+---
+# https://ansible-lint.readthedocs.io/en/latest/default_rules/
+exclude_paths:
+  - roles/kubeblocks/files
+
+skip_list:
+  - experimental
+  - galaxy[no-changelog]
+  - risky-shell-pipe
+  - role-name
+  - run-once[task]
+  - var-naming[no-role-prefix]
+...

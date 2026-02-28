@@ -1,0 +1,14 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- name: Manage KubeBlocks Database
+  hosts: localhost
+  become: false
+  tags: [database]
+  connection: local
+
+  tasks:
+    - name: Configure KubeBlocks
+      ansible.builtin.include_role:
+        name: kubeblocks
+        tasks_from: ops_request.yml

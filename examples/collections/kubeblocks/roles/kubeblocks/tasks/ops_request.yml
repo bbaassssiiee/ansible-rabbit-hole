@@ -1,0 +1,147 @@
+---
+- name: Assert inputs
+  ansible.builtin.assert:
+    that:
+      - db_type in [ 'kafka', 'mysql', 'postgresql', 'rabbitmq', 'redis', 'zookeeper' ]
+      - ops_request in ['cluster', 'restart', 'start', 'stop', 'scale-in', 'scale-out', 'verticalscale', 'volumeexpand', 'upgrade', 'switchover-specified-instance']
+    success_msg: "{{ db_type }} => {{ ops_request }}"
+
+- name: Validate database namespace name
+  ansible.builtin.assert:
+    that:
+      - db_namespace is match('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
+      - db_namespace | length <= 63
+    fail_msg: >-
+      Invalid RFC 1123 label "{{ db_namespace }}": must consist of lowercase
+      alphanumeric characters or '-', must start and end with an alphanumeric
+      character (e.g. 'my-name' or '123-abc'), and be at most 63 characters.
+      Regex: [a-z0-9]([-a-z0-9]*[a-z0-9])?
+    success_msg: "db_namespace '{{ db_namespace }}' is valid"
+
+- name: Ensure directory
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/files/{{ db_type }}"
+    state: directory
+    mode: '0700'
+
+- name: Prepare ops request
+  ansible.builtin.template:
+    src: "{{ db_type }}/{{ ops_request }}.yaml"
+    dest: "{{ playbook_dir }}/files/{{ db_type }}/{{ ops_request }}.yaml"
+    mode: '0600'
+
+- name: Create db_namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ db_namespace }}"
+    state: present
+
+- name: Fulfill ops request
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ db_namespace }}"
+    definition: "{{ lookup('file', playbook_dir + '/files/{{ db_type }}/{{ ops_request }}.yaml') | from_yaml }}"
+
+- name: Get {{ db_type }} clusters from namespace
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      kbcli cluster list -n {{ db_namespace }} -o json | \
+      jq -c '.items[] | select(.spec.componentSpecs[]?.componentDef | startswith("{{ db_type }}-"))'
+    executable: /bin/bash
+  register: db_clusters_json
+  changed_when: false
+  failed_when: false
+
+- name: Parse {{ db_type }} clusters
+  ansible.builtin.set_fact:
+    db_clusters: "{{ db_clusters_json.stdout_lines | map('from_json') | list }}"
+  when: db_clusters_json.stdout != ""
+
+- name: Set empty list if no clusters found
+  ansible.builtin.set_fact:
+    db_clusters: []
+  when: db_clusters_json.stdout == ""
+
+- name: Wait for {{ db_type }} clusters to be ready
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      kbcli cluster list -n {{ db_namespace }} -o json | \
+      jq -e '[.items[] | select(.spec.componentSpecs[]?.componentDef | startswith("{{ db_type }}-")) | select(.status.phase == "Running")] | length > 0'
+    executable: /bin/bash
+  register: clusters_ready
+  until: clusters_ready.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+  failed_when: false
+  when: db_clusters | length > 0
+
+- name: Display {{ db_type }} cluster summary
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════
+      {{ db_type | upper }} CLUSTERS ({{ db_clusters | length }})
+      ═══════════════════════════════════════════════════════════
+      {% for cluster in db_clusters %}
+
+      Name: {{ cluster.metadata.name }}
+      Phase: {{ cluster.status.phase }}
+      Components: {{ cluster.status.components.keys() | list | join(', ') }}
+      Created: {{ cluster.metadata.creationTimestamp }}
+      {% endfor %}
+
+      ═══════════════════════════════════════════════════════════
+  when: db_clusters | length > 0
+
+- name: Show detailed {{ db_type }} cluster information
+  ansible.builtin.shell:
+    cmd: |
+      {% for cluster in db_clusters %}
+      echo ""
+      echo "=== {{ cluster.metadata.name }} ==="
+      echo ""
+      kbcli cluster list-components {{ cluster.metadata.name }} -n {{ db_namespace }}
+      echo ""
+      kbcli cluster list-instances {{ cluster.metadata.name }} -n {{ db_namespace }}
+      echo ""
+      {% endfor %}
+  register: cluster_details
+  changed_when: false
+  when: db_clusters | length > 0
+
+- name: Display cluster details
+  ansible.builtin.debug:
+    msg: "{{ cluster_details.stdout_lines }}"
+  when: db_clusters | length > 0
+
+- name: Show connection information
+  ansible.builtin.command:
+    cmd: kbcli cluster describe {{ item.metadata.name }} -n {{ db_namespace }}
+  loop: "{{ db_clusters }}"
+  loop_control:
+    label: "{{ item.metadata.name }}"
+  register: connection_info
+  changed_when: false
+  when: db_clusters | length > 0
+
+- name: Display connection details
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════
+      CONNECTION: {{ item.item.metadata.name }}
+      ═══════════════════════════════════════════════════════════
+      {{ item.stdout }}
+  loop: "{{ connection_info.results }}"
+  loop_control:
+    label: "{{ item.item.metadata.name }}"
+  when: db_clusters | length > 0
+
+- name: No matching clusters found
+  ansible.builtin.debug:
+    msg: "No {{ db_type }} clusters found in namespace {{ db_namespace }}"
+  when: db_clusters | length == 0

@@ -1,0 +1,28 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-http-cert
+  namespace: "logging"
+spec:
+  commonName: opensearch.local
+  issuerRef:
+    name: "ca-issuer"
+    kind: ClusterIssuer
+  dnsNames:
+    - localhost
+    - opensearch-cluster.logging.svc.cluster.local
+    - opensearch-cluster.logging.svc
+    - opensearch-cluster.logging
+    - opensearch-cluster
+    - opensearch.logging
+    - opensearch-api.local
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 4096
+  secretName: opensearch-http-cert
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth

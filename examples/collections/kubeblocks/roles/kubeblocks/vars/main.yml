@@ -1,0 +1,4 @@
+---
+crd_manifest: kubeblocks_crds.yaml
+helm_repo_name: kubeblocks
+kubeblocks_version: "1.0.1"

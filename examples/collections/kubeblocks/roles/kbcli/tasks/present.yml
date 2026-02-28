@@ -1,0 +1,37 @@
+---
+
+- name: Check cached package in /tmp
+  ansible.builtin.stat:
+    path: "/tmp/kbcli.{{ kbcli_pkg_ext }}"
+  register: kbcli_stat
+
+- name: Download kbcli package
+  when: kbcli_stat.exists is not defined
+  ansible.builtin.get_url:
+    url: "{{ kbcli_download_url }}"
+    dest: "/tmp/kbcli.{{ kbcli_pkg_ext }}"
+    mode: '0644'
+  no_log: "{{ not debug }}"
+  retries: 5
+  timeout: 60
+  register: downloaded_kbcli
+
+# This task will be skipped in check mode
+- name: Ensure kbcli installed
+  ansible.builtin.dnf:
+    name: "file:///tmp/kbcli.{{ kbcli_pkg_ext }}"
+    disable_gpg_check: true
+    state: present
+  when:
+    - not ansible_check_mode
+    - ansible_facts['os_family'] == 'RedHat'
+
+# This task will be skipped in check mode
+- name: Ensure kbcli installed
+  ansible.builtin.apt:
+    deb: "file:///tmp/kbcli.{{ kbcli_pkg_ext }}"
+    allow_unauthenticated: true
+    state: present
+  when:
+    - not ansible_check_mode
+    - ansible_facts['os_family'] == 'Debian'

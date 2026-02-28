@@ -1,0 +1,29 @@
+### REQUIRED
+namespace: otobots
+name: opensearch
+version: 1.0.0
+readme: README.md
+authors:
+- Bas Meijer @bbaassssiiee
+repository: https://codeberg.org/otobots/opensearch
+issues: https://codeberg.org/otobots/opensearch
+### OPTIONAL but strongly recommended
+description: Opensearch for Kubernetes implemented with Ansible.
+license:
+- MIT
+license_file: ''
+
+tags:
+- infrastructure
+- monitoring
+
+dependencies:
+  community.general: '>=10.3.0'
+  kubernetes.core: '>=5.1.0'
+
+build_ignore:
+- .ansible
+- .ansible-lint
+- .gitattributes
+- .gitignore
+- .yamllint

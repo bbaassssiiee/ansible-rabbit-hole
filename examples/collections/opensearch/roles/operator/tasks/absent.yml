@@ -1,0 +1,18 @@
+---
+# Tasks to converge to state absent for operator
+
+- name: Cleanup values files
+  when: debug | bool
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/files/values-operator.yml"
+    state: absent
+
+- name: Undeploy operator namespace
+  when: debug | bool
+  kubernetes.core.k8s:
+    name: "{{ operator_namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: absent
+    wait: true
+    wait_timeout: 300

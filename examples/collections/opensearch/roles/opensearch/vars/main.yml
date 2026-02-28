@@ -1,0 +1,10 @@
+---
+# vars file for opensearch
+# Current environment settings
+current_env_config: "{{ opensearch_environments[deployment_environment] }}"
+opensearch_replicas: "{{ current_env_config.replicas }}"
+opensearch_cpu_request: "{{ current_env_config.cpu_request }}"
+opensearch_cpu_limit: "{{ current_env_config.cpu_limit }}"
+opensearch_memory_request: "{{ current_env_config.memory_request }}"
+opensearch_memory_limit: "{{ current_env_config.memory_limit }}"
+opensearch_storage_size: "{{ current_env_config.storage_size }}"

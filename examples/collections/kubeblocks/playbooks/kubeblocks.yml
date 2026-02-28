@@ -1,0 +1,37 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- name: Install kbcli
+  hosts: controller
+  become: true
+
+  tasks:
+    - name: Configure kbcli
+      when: desired_state == 'present'
+      ansible.builtin.include_role:
+        name: kbcli
+
+- name: Manage KubeBlocks
+  hosts: localhost
+  become: false
+  connection: local
+
+  pre_tasks:
+    - name: Log desired_state
+      ansible.builtin.debug:
+        msg: "{{ desired_state }}"
+
+  tasks:
+    - name: Configure KubeBlocks
+      ansible.builtin.include_role:
+        name: kubeblocks
+
+- name: Uninstall kbcli
+  hosts: controller
+  become: true
+
+  tasks:
+    - name: Configure kbcli
+      when: desired_state == 'absent'
+      ansible.builtin.include_role:
+        name: kbcli

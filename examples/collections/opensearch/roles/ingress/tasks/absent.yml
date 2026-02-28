@@ -1,0 +1,16 @@
+---
+# Tasks to converge to state absent for ingress
+- name: Destroy OpenSearch Ingress
+  kubernetes.core.k8s:
+    state: absent
+    namespace: "{{ opensearch_namespace }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ item }}"
+    wait: true
+    wait_timeout: 600
+  loop:
+    # - opensearch-api-ingress
+    - opensearch-cluster-dashboards-ingress

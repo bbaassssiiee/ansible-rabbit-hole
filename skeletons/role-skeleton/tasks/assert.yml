@@ -1,0 +1,31 @@
+---
+# tasks/assert.yml
+#
+# Validate required variables BEFORE the role does anything.
+# Fail fast with a clear message rather than failing mid-run with a cryptic error.
+# The `always` tag in main.yml ensures this runs even with selective --tags.
+#
+# 🐇 /explore fail-fast — why asserting early saves debugging time
+
+- name: "{{ role_name }} | Assert required variables are defined"
+  ansible.builtin.assert:
+    that:
+      # Add required variables here
+      # - role_name_required_var is defined
+      # - role_name_required_var | length > 0
+      - role_name_config_dir is defined
+    fail_msg: >
+      Required variable is not set.
+      See defaults/main.yml for documentation on required variables.
+    quiet: true
+
+# For sensitive variables: assert without revealing the value
+- name: "{{ role_name }} | Assert secret is set"
+  ansible.builtin.assert:
+    that:
+      - role_name_secret | length > 0
+    fail_msg: >
+      role_name_secret must be set via ansible-vault.
+      It should never have a plaintext default.
+  no_log: true
+  # Remove this task if the role has no secrets
