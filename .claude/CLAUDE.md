@@ -37,7 +37,7 @@ rabbit hole = following a concept all the way down until it makes sense.
 | Just arrived        | `/orient` — get your bearings     |
 | Learning a concept  | `/explore <concept>`              |
 | Starting a new role | `/new-role <name>`                |
-| Reviewing your work | `/review`                         |
+| Reviewing your work | `/review-role`                    |
 | Stuck on an error   | `/debug <paste error>`            |
 | Want the story      | `/story <concept>`                |
 | Adding a pattern    | `/contribute`                     |

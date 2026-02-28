@@ -32,16 +32,17 @@ claude .
 
 ```
 .
-├── CLAUDE.md                    ← Coach instructions (Claude reads this always)
 ├── .claude/
-│   ├── commands/                ← /orient, /explore, /new-role, /review, /debug, /story,
+│   ├── CLAUDE.md                ← Coach instructions (Claude reads this always)
+│   ├── commands/                ← /orient, /explore, /new-role, /review-role,
+│   │                               /debug, /story, /pooh, /gandalf, /alice, /contribute
 │   ├── skills/                  ← ansible-coach, storyteller, rabbit-hole-guide
-│   ├── rules/                   ← always-on best practice rules
-│   └── agents/                  ← specialized subagents (linter, tester, reviewer)
+│   └── rules/                   ← always-on best practice rules
 ├── documents/
 │   ├── patterns/                ← what works and why
 │   ├── anti-patterns/           ← what breaks and how
-│   └── obstacles/               ← inherent limitations to know about
+│   ├── obstacles/               ← inherent limitations to know about
+│   └── personas/                ← character lenses (Pooh, Gandalf, Alice...)
 ├── skeletons/
 │   ├── role-skeleton/           ← production-ready role template with Molecule
 │   ├── collection-skeleton/     ← full collection structure
@@ -49,7 +50,10 @@ claude .
 │   └── split-staging/           ← separate inventory repos for prod/staging
 └── examples/
     ├── well-organized-project/  ← annotated real-world project structure
-    └── monorepo-vs-split/       ← the decision explained with both options
+    ├── monorepo-vs-split/       ← the decision explained with both options
+    ├── collections/             ← real collection examples (kubeblocks, opensearch)
+    ├── inventories/             ← static, dynamic, loop_hosts patterns
+    └── roles/                   ← role organisation anti-patterns and fixes
 ```
 
 ## The rabbit hole metaphor
@@ -61,14 +65,13 @@ Each topic has a surface and a depth. The commands guide you:
 - The pattern catalog maps what you discover to named, reusable concepts
 
 
-##  Hear it in another voice.
+## Hear it in another voice
 
-- /pooh  — Explain it simply, from appetite to understanding
-- /alice — Follow the concept down the rabbit hole
-- /gandalf — The deep path; what lies beneath
+- `/pooh`    — Explain it simply, from appetite to understanding
+- `/alice`   — Follow the concept down the rabbit hole
+- `/gandalf` — The deep path; what lies beneath
 
-
-All three accept $ARGUMENTS or infer from context.
+All three accept `$ARGUMENTS` or infer from context.
 
 ## Contributing
 
